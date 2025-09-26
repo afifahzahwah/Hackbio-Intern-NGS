@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script: 05_quast_quality.sh
+# Script: 05_quastquality.sh
 # Description: Run QUAST quality assessment on assembled genomes.
 
 # Set directories
