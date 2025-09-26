@@ -1,5 +1,5 @@
 # Differential expression analysis – Arabidopsis
-# File Required: counts.txt  +  metadata.csv
+# File Required: counts.txt + metadata.csv
 
 # 1. Set working directory
 setwd("/Users/USER/Desktop/Arabidopsis_RNASeq") # my working directory
@@ -10,32 +10,36 @@ library(pheatmap) # to visualise upregulated and downregulated genes in heatmap
 library(dplyr) # to perform data manipulation
 library(ggplot2) # to create plot for enrichment
 library(clusterProfiler) # for enrichment analysis
-library(org.At.tair.db)   # for Arabidopsis ID mapping
+library(org.At.tair.db)  # for Arabidopsis ID mapping
 
 
 # 3. Read in data
-counts <- read.delim("counts.txt", header = TRUE, comment.char = "#") # result from RNA-Seq Data Analysis
-meta   <- read.csv("metadata.csv", header = TRUE, stringsAsFactors = TRUE) # metadata files that we create
+counts <- read.delim("counts.txt", header = TRUE, comment.char = "#") 
+meta   <- read.csv("metadata.csv", header = TRUE, stringsAsFactors = FALSE) # CRITICAL FIX: Use stringsAsFactors=FALSE
 
-# use regular expression to rename the column names to make it clear
-colnames(counts) <- gsub("_trimmed_Aligned\\.sortedByCoord\\.out$", "", colnames(counts))
+# 4. Prepare count matrix - CRITICAL SYNCHRONIZATION FIX
+# Select only the count columns (columns 7 to 12 from the counts file)
+raw_counts <- counts[ , 7:12 ] 
 
-# Preview
-head(counts)
-head(meta)
+# Extract the short sample names (e.g., 'ctl_1') from the long FeatureCounts column names
+# The long names are like: mapped/ctl_1_trimmed_Aligned.sortedByCoord.out.bam
+# We will use the names from the 'meta' file as the source of truth.
 
-# 4. Prepare count matrix
-# Keep only columns of counts from samples in metadata
-raw_counts <- counts[ , c(1, 7:12) ]
+# Get the clean, short names from the metadata file
+clean_short_names <- meta$sample
 
-# Add gene IDs as rownames
+# Apply these clean names to the raw_counts columns
+colnames(raw_counts) <- clean_short_names
+
+# Add gene IDs as rownames to raw_counts
 rownames(raw_counts) <- counts$Geneid
 
-# Remove the Gene id column
-raw_counts <- raw_counts[ , -1 ]
+# Set row names for metadata ('meta') to match the count matrix
+row.names(meta) <- meta$sample
 
-# preview raw_counts
+# Preview raw_counts (should now have short column names like ctl_1)
 head(raw_counts)
+
 
 # 5. Create DESeq2 dataset
 # Design formula compares conditions (Control vs Treated)
@@ -48,13 +52,14 @@ dds$condition <- relevel(dds$condition, ref = "control")
 
 # 6. Run differential expression
 dds <- DESeq(dds)
-res <- results(dds)    
+res <- results(dds)      
 
 # Inspect results
 head(res)
 summary(res)
 
-# 7. Volcano plot
+
+# 7. Volcano plot (Code is correct, no changes needed)
 plot(res$log2FoldChange,
      -log10(res$padj),
      pch = 19, cex = 0.4,
@@ -66,18 +71,17 @@ abline(v = c(-1, 1), lty = 2, col = "blue")
 abline(h = -log10(0.05), lty = 2, col = "red")
 
 # Highlight significant genes
-# log2(fold change) > 1 and FDR < 0.05 (according to the paper)
-up   <- subset(res, padj < 0.05 & log2FoldChange > 1)
+up    <- subset(res, padj < 0.05 & log2FoldChange > 1)
 down <- subset(res, padj < 0.05 & log2FoldChange < -1)
-points(up$log2FoldChange,   -log10(up$padj),   col="salmon",    pch=19, cex=0.5)
+points(up$log2FoldChange,    -log10(up$padj),    col="salmon",    pch=19, cex=0.5)
 points(down$log2FoldChange, -log10(down$padj), col="lightblue", pch=19, cex=0.5)
 
 
-# 8. Heatmap of DE genes
-# combine up & down for visualization
+# 8. Heatmap of DE genes - CRITICAL FIXES FOR SYNC AND TYPO
+# Combine up & down for visualization
 de_genes <- c(rownames(up), rownames(down))
 
-# create heatmap
+# Create heatmap for all DE genes (if more than 2)
 if (length(de_genes) > 2) {
   pheatmap(raw_counts[de_genes, ],
            scale = "row",
@@ -88,32 +92,29 @@ if (length(de_genes) > 2) {
 }
 
 # Create a clear heatmap for Top 50 DE Genes
-# reorder columns
-ordered_cols <- c("ctl_1","ctl_2","ctl_3","uv_1","uv_2","uv_3")
+# 1. Reorder columns (FIX TYPO: "uv_1" changed to "uvc_1")
+ordered_cols <- c("ctl_1","ctl_2","ctl_3","uvc_1","uvc_2","uvc_3") 
 
-# Sample treatment information
-sample_group <- data.frame(
-  Treatment = c("Control","Control","Control","UV-C","UV-C","UV-C")
-)
+# 2. Prepare the annotation data frame using the synchronized 'meta' object
+sample_group <- data.frame(Treatment = meta$condition) 
+row.names(sample_group) <- row.names(meta) # CRITICAL: Ensure row names match raw_counts
+
+# 3. Define annotation colors
 ann_colors <- list(
-  Treatment = c("Control" = "skyblue", "UV-C" = "tomato")
+  Treatment = c("control" = "skyblue", "treated" = "tomato")
 )
 
-# treatment to sample names
-row.names(sample_group) <- colnames(raw_counts) 
-
-# Create heatmap
+# 4. Create heatmap
 top <- head(order(res$padj), 50)
 pheatmap(raw_counts[top, ordered_cols],
          scale = "row",
          cluster_cols = FALSE,
          fontsize_row = 6, 
-         annotation_col = sample_group[ordered_cols, , drop=FALSE],
+         annotation_col = sample_group[ordered_cols, , drop=FALSE], # Now fully synchronized
          annotation_colors = ann_colors,
          main = "Top 50 DE Genes (grouped by treatment)")
 
-
-# 9. Filter Top 100 Differentially Expressed Genes
+# 9. Filter Top 100 Differentially Expressed Genes (Code is correct)
 # Filter with |log2FC| > 2.5 and FDR < 0.05
 res_filtered <- res %>%
   as.data.frame() %>%
@@ -127,8 +128,7 @@ top100 <- res_filtered %>%
 
 head(top100)
 
-
-# 10. Enrichment Analysis
+# 10. Enrichment Analysis (Code is correct)
 # Get the gene IDs DE result
 de_genes <- rownames(top100)
 
@@ -144,14 +144,14 @@ entrez_ids <- na.omit(entrez)
 length(entrez_ids)
 
 # GO: Biological Process
-ego_bp <- enrichGO(gene       = entrez_ids,
-                OrgDb         = org.At.tair.db,
-                keyType       = "ENTREZID",
-                ont           = "BP",         # Biological Process
-                pAdjustMethod = "BH",
-                pvalueCutoff  = 0.05,
-                qvalueCutoff  = 0.05,
-                readable      = TRUE) 
+ego_bp <- enrichGO(gene        = entrez_ids,
+                   OrgDb       = org.At.tair.db,
+                   keyType     = "ENTREZID",
+                   ont         = "BP",          # Biological Process
+                   pAdjustMethod = "BH",
+                   pvalueCutoff  = 0.05,
+                   qvalueCutoff  = 0.05,
+                   readable    = TRUE)  
 
 # Plot
 dotplot(ego_bp, showCategory = 20) +
@@ -165,14 +165,14 @@ dotplot(ego_bp, showCategory = 20) +
   )
 
 # GO: Cellular Component
-ego_cc <- enrichGO(gene       = entrez_ids,
-                OrgDb         = org.At.tair.db,
-                keyType       = "ENTREZID",
-                ont           = "CC",         # Biological Process
-                 pAdjustMethod = "BH",
-                pvalueCutoff  = 0.05,
-                qvalueCutoff  = 0.05,
-                readable      = TRUE) 
+ego_cc <- enrichGO(gene        = entrez_ids,
+                   OrgDb       = org.At.tair.db,
+                   keyType     = "ENTREZID",
+                   ont         = "CC",          # Cellular Component
+                   pAdjustMethod = "BH",
+                   pvalueCutoff  = 0.05,
+                   qvalueCutoff  = 0.05,
+                   readable    = TRUE)  
 
 # Plot
 dotplot(ego_cc, showCategory = 20) +
@@ -186,14 +186,14 @@ dotplot(ego_cc, showCategory = 20) +
   )
 
 # GO: Molecular Function
-ego_mf <- enrichGO(gene       = entrez_ids,
-                   OrgDb         = org.At.tair.db,
-                   keyType       = "ENTREZID",
-                   ont           = "MF",         # Biological Process
+ego_mf <- enrichGO(gene        = entrez_ids,
+                   OrgDb       = org.At.tair.db,
+                   keyType     = "ENTREZID",
+                   ont         = "MF",          # Molecular Function
                    pAdjustMethod = "BH",
                    pvalueCutoff  = 0.05,
                    qvalueCutoff  = 0.05,
-                   readable      = TRUE) 
+                   readable    = TRUE)  
 
 # Plot
 dotplot(ego_mf, showCategory = 20) +
@@ -227,11 +227,11 @@ tair_ids <- sub("^gene:", "", rownames(res))
 de_tair  <- tair_ids[res$padj < 0.05 & abs(res$log2FoldChange) > 1]
 
 # Run KEGG enrichment using TAIR IDs
-kegg_res <- enrichKEGG(gene         = de_tair,
-                       organism     = "ath",
-                       keyType      = "kegg", 
-                       pAdjustMethod= "BH",
-                       qvalueCutoff = 0.05)
+kegg_res <- enrichKEGG(gene          = de_tair,
+                       organism      = "ath",
+                       keyType       = "kegg",  
+                       pAdjustMethod = "BH",
+                       qvalueCutoff  = 0.05)
 
 # Create plot
 dotplot(kegg_res, showCategory = 20) +
@@ -251,10 +251,10 @@ top5_pathways <- kegg_res@result %>%
 
 
 # 11. Save outputs
-write.csv(res,         "all_results.csv")
-write.csv(up,          "upregulated.csv")
-write.csv(down,        "downregulated.csv")
-write.csv(raw_counts,  "raw_counts.csv")
+write.csv(res,           "all_results.csv")
+write.csv(up,            "upregulated.csv")
+write.csv(down,          "downregulated.csv")
+write.csv(raw_counts,    "raw_counts.csv")
 write.csv(top100, "top100_DE_genes.csv", row.names = TRUE)
 write.csv(top5_pathways, "top5_pathways.csv", row.names = FALSE)
 write.csv(go_top20, "GO_top20_BP_CC_MF.csv", row.names = FALSE)
