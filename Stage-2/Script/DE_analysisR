@@ -26,10 +26,10 @@ head(meta)
 
 # 4. Prepare count matrix
 # Keep only columns of counts from samples in metadata
-raw_counts <- counts[ , c(1, 7:12) ]
+rawcounts <- counts[ , c(1, 7:12) ]
 
 # Add gene IDs as rownames
-rownames(raw_counts) <- counts$Geneid
+rownames(rawcounts) <- counts$Geneid
 
 # Remove the Gene id column
 rawcounts <- rawcounts[ , -1 ]
