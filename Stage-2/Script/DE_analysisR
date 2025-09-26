@@ -40,7 +40,7 @@ head(raw_counts)
 # 5. Create DESeq2 dataset
 # Design formula compares conditions (Control vs Treated)
 meta$condition <- factor(meta$condition, levels = c("control", "treated"))
-dds <- DESeqDataSetFromMatrix(countData = rawcounts,
+dds <- DESeqDataSetFromMatrix(countData = raw_counts,
                               colData   = meta,
                               design    = ~ condition)
 
