@@ -32,15 +32,15 @@ raw_counts <- counts[ , c(1, 7:12) ]
 rownames(raw_counts) <- counts$Geneid
 
 # Remove the Gene id column
-raw_counts <- raw_counts[ , -1 ]
+rawcounts <- rawcounts[ , -1 ]
 
 # preview raw_counts
-head(raw_counts)
+head(rawcounts)
 
 # 5. Create DESeq2 dataset
 # Design formula compares conditions (Control vs Treated)
 meta$condition <- factor(meta$condition, levels = c("control", "treated"))
-dds <- DESeqDataSetFromMatrix(countData = raw_counts,
+dds <- DESeqDataSetFromMatrix(countData = rawcounts,
                               colData   = meta,
                               design    = ~ condition)
 
@@ -89,7 +89,7 @@ if (length(de_genes) > 2) {
 
 # Create a clear heatmap for Top 50 DE Genes
 # reorder columns
-ordered_cols <- c("ctl_1","ctl_2","ctl_3","uvc_1","uvc_2","uvc_3")
+ordered_cols <- c("ctl_1","ctl_2","ctl_3","uv_1","uv_2","uv_3")
 
 # Sample treatment information
 sample_group <- data.frame(
