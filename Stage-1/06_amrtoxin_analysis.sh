@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Script: 06_amr_toxin_analysis.sh
+# Script: 06_amrtoxin_analysis.sh
 # Description: Run ABRicate for AMR and toxin gene detection.
 
 # Set directories
