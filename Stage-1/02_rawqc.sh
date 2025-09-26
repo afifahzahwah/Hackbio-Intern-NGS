@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Script: 02_raw_qc.sh
+# Script: 02_rawqc.sh
 # Description: Run FastQC on raw sequencing data for initial quality assessment.
 
 # Set directories for clarity
