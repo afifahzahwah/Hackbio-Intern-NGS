@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Script: 03_trim_and_qc.sh
+# Script: 03_trimqc.sh
 # Description: Perform trimming with fastp followed by quality control on trimmed data.
 
 # Set directories
