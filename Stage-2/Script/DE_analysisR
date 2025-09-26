@@ -26,16 +26,16 @@ head(meta)
 
 # 4. Prepare count matrix
 # Keep only columns of counts from samples in metadata
-rawcounts <- counts[ , c(1, 7:12) ]
+raw_counts <- counts[ , c(1, 7:12) ]
 
 # Add gene IDs as rownames
-rownames(rawcounts) <- counts$Geneid
+rownames(raw_counts) <- counts$Geneid
 
 # Remove the Gene id column
-rawcounts <- rawcounts[ , -1 ]
+raw_counts <- raw_counts[ , -1 ]
 
 # preview raw_counts
-head(rawcounts)
+head(raw_counts)
 
 # 5. Create DESeq2 dataset
 # Design formula compares conditions (Control vs Treated)
