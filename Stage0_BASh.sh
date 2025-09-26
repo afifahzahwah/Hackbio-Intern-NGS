@@ -1,0 +1,100 @@
+Project 1: Bash Basic 
+#!/bin/bash 
+ 
+# 1. Print your name
+echo afifah zahwah 
+
+ # 2. Create a folder titled your name
+mkdir afifahzahwah
+
+# 3. Create another new directory title biocomputing and change to that directory with one line of command 
+mkdir biocomputing && cd biocomputing 
+
+# 4. Download these 3 files:
+# The last URL is a duplicate, which will be named wildtype.gbk.1 
+wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.fna 
+wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk
+wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk 
+
+# 5. Move the .fna file to the folder titled your name
+mv wildtype.fna ../afifahzahwah/
+
+# 6. Delete the duplicate gbk file
+rm *.gbk.1
+
+# 7. Confirm if the .fna file is mutant or wild type (tatatata vs tata)
+grep -i "tatatata" ../afifahzahwah/wildtype.fna && echo "Mutant" || echo "Wildtype"
+
+# 8. If mutant, print all matching lines into a new file
+grep -i "tatatata" ../afifahzahwah/wildtype.fna > mutant_match.txt 
+
+# 9. Count number of lines (excluding header) in the .gbk file 
+awk '/^ORIGIN/,0{if (!/^ORIGIN/) print}' wildtype.gbk | wc -l
+
+# 10. Print the sequence length of the .gbk file.
+awk '/^LOCUS/ {print $3}' wildtype.gbk
+
+# 11. Print the source organism of the .gbk file.
+awk '/^SOURCE/ { $1=""; print $0 }' wildtype.gbk
+
+# 12. List all the gene names of the .gbk file.
+grep '/gene=' wildtype.gbk | sed 's/.*\/gene="\([^"]*\)".*/\1/'
+
+# 13. Clear your terminal space and print all commands used today
+clear 
+history 
+
+# 14. List the files in the two folders
+echo "afifahzahwah:"; ls afifahzawah
+echo "biocomputing:"; ls biocomputing 
+
+
+
+
+
+
+Project 2: Installing Bioinformatics Software on the Terminal 
+# 1. Activate your base conda environment
+conda activate
+
+# 2. Create a conda environment named funtools
+conda create -n funtools
+
+# 3. Activate the funtools environment
+conda activate funtools
+
+# 4. Install Figlet using conda
+conda install -c conda-forge figlet
+
+# 5. Run figlet <your name>
+figlet AFIFAH_ZAHWAH
+
+# 6. Install bwa through the bioconda channel
+conda install -c bioconda bwa
+
+# 7. Install blast through the bioconda channel
+conda install -c bioconda blast
+
+# 8. Install samtools through the bioconda channel
+conda install -c bioconda samtools
+
+# 9. Install bedtools through the bioconda channel
+conda install -c bioconda bedtools
+
+# 10. Install spades.py through the bioconda channel
+conda install -c bioconda spades
+
+# 11. Install bcftools through the bioconda channel
+conda install -c bioconda bcftools
+
+# 12. Install fastp through the bioconda channel
+conda install -c bioconda fastp
+
+# 13. Install multiqc through the bioconda channel
+conda install -c bioconda multiqc
+
+
+
+
+
+
